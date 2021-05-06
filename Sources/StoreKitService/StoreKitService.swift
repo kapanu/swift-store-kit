@@ -10,13 +10,13 @@ import Foundation
 import StoreKit
 import os
 
-class StoreKitService: NSObject {
+public class StoreKitService: NSObject {
   
-  typealias ProductRequestCompletion = ([SKProduct])->()
-  typealias PaymentRequestCompletion = (Result<Void, Error>)->()
-  typealias RestoreTransactionsRequestCompletion = (Result<Void, Error>)->()
+  public typealias ProductRequestCompletion = ([SKProduct])->()
+  public typealias PaymentRequestCompletion = (Result<Void, Error>)->()
+  public typealias RestoreTransactionsRequestCompletion = (Result<Void, Error>)->()
   
-  static let shared = StoreKitService()
+  public static let shared = StoreKitService()
   
   private var productRequests: [SKProductsRequest: ProductRequestCompletion] = [:]
   private var purchaseRequests: [String : PaymentRequestCompletion] = [:]
@@ -33,7 +33,7 @@ class StoreKitService: NSObject {
     SKPaymentQueue.default().add(self)
   }
   
-  func fetchProducts(matchingIdentifiers identifiers: [String], completion: @escaping ProductRequestCompletion) {
+  public func fetchProducts(matchingIdentifiers identifiers: [String], completion: @escaping ProductRequestCompletion) {
     let productIdentifiers = Set(identifiers)
     let productRequest = SKProductsRequest(productIdentifiers: productIdentifiers)
     productRequest.delegate = self
@@ -42,14 +42,14 @@ class StoreKitService: NSObject {
   }
   
   
-  func buy(_ product: SKProduct, completion: @escaping PaymentRequestCompletion) {
+  public func buy(_ product: SKProduct, completion: @escaping PaymentRequestCompletion) {
     let payment = SKMutablePayment(product: product)
     purchaseRequests[product.productIdentifier] = completion
     
     SKPaymentQueue.default().add(payment)
   }
   
-  func restoreTransactions(completion: @escaping RestoreTransactionsRequestCompletion) {
+  public func restoreTransactions(completion: @escaping RestoreTransactionsRequestCompletion) {
     
     if !restoredTransactions.isEmpty {
       restoredTransactions.removeAll()
@@ -59,7 +59,7 @@ class StoreKitService: NSObject {
   }
   
   
-  func validateSubscriptions(environment: VerifyReceiptURLType, sharedSecret: String, subscriptionType: SubscriptionType = .autoRenewable, productIds: Set<String>, completion: @escaping (Result<VerifySubscriptionResult, Error>)->()) {
+  public func validateSubscriptions(environment: VerifyReceiptURLType, sharedSecret: String, subscriptionType: SubscriptionType = .autoRenewable, productIds: Set<String>, completion: @escaping (Result<VerifySubscriptionResult, Error>)->()) {
     
     validateReceiptData(sharedSecret: sharedSecret) { result in
       switch result {
@@ -134,7 +134,7 @@ class StoreKitService: NSObject {
 
 extension StoreKitService: SKPaymentTransactionObserver {
   
-  func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+  public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
     for transaction in transactions {
       switch transaction.transactionState {
       case .purchasing: break
@@ -152,18 +152,18 @@ extension StoreKitService: SKPaymentTransactionObserver {
   }
   
   /// Logs all transactions that have been removed from the payment queue.
-  func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
+  public func paymentQueue(_ queue: SKPaymentQueue, removedTransactions transactions: [SKPaymentTransaction]) {
   }
   
   /// Called when an error occur while restoring purchases. Notify the user about the error.
-  func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+  public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
     os_log(.debug, "Error restoring transactions. Error: %{private}@", error.localizedDescription)
     restoredTransactionsCompletion?(.failure(error))
     restoredTransactionsCompletion = nil
   }
   
   /// Called when all restorable transactions have been processed by the payment queue.
-  func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+  public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
     os_log(.debug, "Transaction restoration completed")
     restoredTransactionsCompletion?(.success(()))
     restoredTransactionsCompletion = nil
@@ -172,7 +172,7 @@ extension StoreKitService: SKPaymentTransactionObserver {
 
 extension StoreKitService: SKProductsRequestDelegate {
   
-  func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
+  public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
     guard let completion = productRequests[request] else { return }
     productRequests.removeValue(forKey: request)
     DispatchQueue.main.async {
