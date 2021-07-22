@@ -124,7 +124,11 @@ public class StoreKitService: NSObject {
       switch result {
       case .success(let data):
         let validator = AppleReceiptValidator(sharedSecret: sharedSecret)
-        validator.validate(service: .production, receiptData: data, completion: completion)
+        validator.validate(service: .production, receiptData: data, completion: { result in
+          DispatchQueue.main.async {
+            completion(result)
+          }
+        })
       case .failure(let error):
         completion(.failure(error))
       }
