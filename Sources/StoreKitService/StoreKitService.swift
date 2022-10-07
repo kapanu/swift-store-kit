@@ -12,7 +12,7 @@ import os
 
 public class StoreKitService: NSObject {
   
-  public typealias ProductRequestCompletion = ([SKProduct])->()
+  public typealias ProductRequestCompletion = (Result<[SKProduct], Error>)->()
   public typealias PaymentRequestCompletion = (Result<Void, Error>)->()
   public typealias RestoreTransactionsRequestCompletion = (Result<Void, Error>)->()
   
@@ -119,7 +119,7 @@ public class StoreKitService: NSObject {
     }
   }
   
-  private func validateReceiptData(sharedSecret: String, completion: @escaping (Result<ReceiptInfo, Error>)->()) {
+  func validateReceiptData(sharedSecret: String, completion: @escaping (Result<ReceiptInfo, Error>)->()) {
     getReceiptData { result in
       switch result {
       case .success(let data):
@@ -180,9 +180,17 @@ extension StoreKitService: SKProductsRequestDelegate {
     guard let completion = productRequests[request] else { return }
     productRequests.removeValue(forKey: request)
     DispatchQueue.main.async {
-      completion(response.products)
+        completion(.success(response.products))
     }
   }
+    
+    public func request(_ request: SKRequest, didFailWithError error: Error) {
+        guard let request = request as? SKProductsRequest, let completion = productRequests[request] else { return }
+        productRequests.removeValue(forKey: request)
+        DispatchQueue.main.async {
+            completion(.failure(error))
+        }
+    }
 }
 
 public enum VerifyReceiptURLType: String {
